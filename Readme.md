@@ -5,13 +5,13 @@
 <p  align="center">
 <a href="https://github.com/cugu/kaitaigo"><img src="https://img.shields.io/azure-devops/build/cugu/dfir/1" alt="build" /></a>
 <a href="https://codecov.io/gh/cugu/kaitaigo"><img src="https://codecov.io/gh/cugu/kaitaigo/branch/master/graph/badge.svg" alt="coverage" /></a>
-<a href="https://goreportcard.com/report/dfir.software/kaitaigo"><img src="https://goreportcard.com/badge/dfir.software/kaitaigo" alt="report" /></a>
+<a href="https://goreportcard.com/report/github.com/go-ee/kaitaigo"><img src="https://goreportcard.com/badge/github.com/go-ee/kaitaigo" alt="report" /></a>
 </p>
 
 ## Installation
 
 ```sh
-go get dfir.software/kaitaigo
+go get github.com/go-ee/kaitaigo
 ```
 
 ## Usage

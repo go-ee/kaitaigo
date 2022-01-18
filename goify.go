@@ -16,6 +16,17 @@ import (
 )
 
 var typeMapping = map[string]string{
+	"b1":   "bool",
+	"b1le": "bool",
+	"b2":   "int",
+	"b2le": "uint32",
+	"b4le": "uint64",
+	"b6le": "uint64",
+	"b3":   "uint64",
+	"b4":   "uint64",
+	"b5":   "uint64",
+	"b6":   "uint64",
+	"b7":   "uint64",
 	"u1":   "uint8",
 	"u2":   "uint16",
 	"u4":   "uint32",

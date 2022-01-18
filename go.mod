@@ -1,4 +1,4 @@
-module dfir.software/kaitaigo
+module github.com/go-ee/kaitaigo
 
 go 1.12
 

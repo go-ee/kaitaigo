@@ -1,4 +1,4 @@
-package main // import "dfir.software/kaitaigo"
+package main // import "github.com/go-ee/kaitaigo"
 
 import (
 	"flag"
@@ -85,7 +85,7 @@ func createGofile(ksyPath, pkg string, debug bool) error {
 	var buffer LineBuffer
 	buffer.WriteLine("// file generated at " + time.Now().UTC().Format(time.RFC3339) + "\n")
 	buffer.WriteLine("package " + pkg)
-	buffer.WriteLine("import (\"dfir.software/kaitaigo/runtime\")")
+	buffer.WriteLine("import (\"github.com/go-ee/kaitaigo/runtime\")")
 	buffer.WriteLine(kaitai.String(baseStruct, baseStruct, baseStruct))
 
 	// format and add imports
