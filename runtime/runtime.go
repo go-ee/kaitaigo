@@ -5,5 +5,5 @@ import (
 )
 
 type KSYDecoder interface {
-	Decode(io.ReadSeeker, interface{}, interface{}) error
+	Decode(reader io.ReadSeeker, ancestors ...interface{}) (err error)
 }
