@@ -165,12 +165,12 @@ func (k *Attribute) String() string {
 }
 
 type Type struct {
-	Meta      Meta                      `yaml:"meta,omitempty"`
-	Types     map[string]Type           `yaml:"types,omitempty"`
-	Seq       []Attribute               `yaml:"seq,omitempty"`
-	Enums     map[string]map[int]string `yaml:"enums,omitempty"`
-	Doc       string                    `yaml:"doc,omitempty"`
-	Instances map[string]Attribute      `yaml:"instances,omitempty"`
+	Meta      Meta                           `yaml:"meta,omitempty"`
+	Types     map[string]Type                `yaml:"types,omitempty"`
+	Seq       []Attribute                    `yaml:"seq,omitempty"`
+	Enums     map[string]map[int]interface{} `yaml:"enums,omitempty"`
+	Doc       string                         `yaml:"doc,omitempty"`
+	Instances map[string]Attribute           `yaml:"instances,omitempty"`
 }
 
 func (k *Type) InitElem(attr Attribute, dataType string, init bool) (goCode string) {
@@ -539,14 +539,32 @@ func (k *Type) String(typeName string, parent string, root string) string {
 	for enum, values := range k.Enums {
 		buffer.WriteLine("var " + strcase.ToCamel(enum) + " = struct {")
 		for _, value := range values {
-			buffer.WriteLine(strcase.ToCamel(value) + " " + getEnumType(enum))
+			enumLiteral := toEnumLiteral(value)
+			buffer.WriteLine(enumLiteral.nameCamel + " " + getEnumType(enum))
 		}
 		buffer.WriteLine("}{")
 		for x, value := range values {
-			buffer.WriteLine(strcase.ToCamel(value) + ": " + strconv.Itoa(x) + ",")
+			enumLiteral := toEnumLiteral(value)
+			buffer.WriteLine(enumLiteral.nameCamel + ": " + strconv.Itoa(x) + ",")
 		}
 		buffer.WriteLine("}")
 	}
 
 	return buffer.String()
+}
+
+type EnumLiteral struct {
+	name      string
+	nameCamel string
+	doc       string
+}
+
+func toEnumLiteral(value interface{}) (ret *EnumLiteral) {
+	if m, ok := value.(map[string]string); ok {
+		ret = &EnumLiteral{name: m["id"], doc: m["doc"]}
+	} else {
+		ret = &EnumLiteral{name: fmt.Sprintf("%v", value)}
+	}
+	ret.nameCamel = strcase.ToCamel(ret.name)
+	return
 }
