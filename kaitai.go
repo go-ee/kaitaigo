@@ -382,9 +382,13 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 		// }
 		// buffer.WriteLine("k." + attr.Name() + " = &" + attr.DataType()[1:] + "{}")
 	case attr.Type.TypeSwitch.SwitchOn != "":
-		buffer.WriteLine("switch " + goExpr(attr.Type.TypeSwitch.SwitchOn, "int64") + " {")
+		buffer.WriteLine("switch " + goExpr(attr.Type.TypeSwitch.SwitchOn, "") + " {")
 		for casevalue, casetype := range attr.Type.TypeSwitch.Cases {
-			buffer.WriteLine("case " + goenum(casevalue, "int64") + ":")
+			if casevalue == "_" {
+				buffer.WriteLine("default:")
+			} else {
+				buffer.WriteLine("case " + goenum(casevalue, "int64") + ":")
+			}
 			buffer.WriteLine("elem = &" + casetype.String() + "{}")
 		}
 		buffer.WriteLine("}")

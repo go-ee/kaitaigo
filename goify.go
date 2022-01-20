@@ -53,8 +53,8 @@ var typeMapping = map[string]string{
 	"f8le": "float64",
 	"f4be": "float32",
 	"f8be": "float64",
-	"str":  "[]byte",
-	"strz": "[]byte",
+	"str":  "string",
+	"strz": "string",
 	"":     "[]byte",
 }
 
@@ -181,6 +181,9 @@ func goExprIdent(expr, casttype, current_attr string) string {
 	s.Filename = "example"
 	cast := false
 	start := true
+
+	exprTrimmed := strings.Trim(expr, " ")
+
 	// fmt.Println(expr)
 	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
 		// fmt.Println("inner", s.TokenText())
@@ -225,7 +228,7 @@ func goExprIdent(expr, casttype, current_attr string) string {
 		case "as":
 			cast = true
 		case "first":
-			if expr == "first" {
+			if exprTrimmed == "first" {
 				ret += strcase.ToCamel(s.TokenText())
 				if !cast {
 					ret += "()"
@@ -234,7 +237,7 @@ func goExprIdent(expr, casttype, current_attr string) string {
 				ret = ret[:len(ret)-1] + "[0]"
 			}
 		case "last":
-			if expr == "last" {
+			if exprTrimmed == "last" {
 				ret += strcase.ToCamel(s.TokenText())
 				if !cast {
 					ret += "()"
@@ -243,7 +246,7 @@ func goExprIdent(expr, casttype, current_attr string) string {
 				ret = ret[:len(ret)-1] + "[:len(" + ret[:len(ret)-1] + ")-1]"
 			}
 		case "length":
-			if expr == "length" {
+			if exprTrimmed == "length" {
 				ret += strcase.ToCamel(s.TokenText())
 				if !cast {
 					ret += "()"
@@ -252,7 +255,7 @@ func goExprIdent(expr, casttype, current_attr string) string {
 				ret = "len(" + ret[:len(ret)-1] + ")"
 			}
 		case "size":
-			if expr == "size" {
+			if exprTrimmed == "size" {
 				ret += strcase.ToCamel(s.TokenText())
 				if !cast {
 					ret += "()"
