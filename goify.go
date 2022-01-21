@@ -18,8 +18,10 @@ import (
 var typeMapping = map[string]string{
 	"b1":   "bool",
 	"b1le": "bool",
-	"b2":   "int",
-	"b2le": "uint32",
+	"b1be": "bool",
+	"b2":   "uint",
+	"b2le": "uint",
+	"b2be": "uint",
 	"b4le": "uint64",
 	"b6le": "uint64",
 	"b3":   "uint64",
@@ -216,9 +218,9 @@ func goExprIdent(expr, casttype, current_attr string) string {
 				ret += s.TokenText()
 			}
 		case "_parent":
-			ret += "Parent()"
+			ret += "ParentBase()"
 		case "_root":
-			ret += "Root()"
+			ret += "RootBase()"
 		case "_index":
 			ret += "index"
 		case "to_i":

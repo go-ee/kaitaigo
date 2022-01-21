@@ -20,8 +20,8 @@ func TestGoify(t *testing.T) {
 	}
 
 	tests := []Result{
-		// "_root._io":                                                       "k.Root().IO()",
-		// "_io.size - _root.sector_size":                                    "k.IO().Size() - k.Root.SectorSize()",
+		// "_root._io":                                                       "k.RootBase().IO()",
+		// "_io.size - _root.sector_size":                                    "k.IO().Size() - k.RootBase.SectorSize()",
 		Result{
 			Input:  "true",
 			GoCode: "true",
@@ -54,32 +54,32 @@ func TestGoify(t *testing.T) {
 		},
 		Result{
 			Input:  "entries_start * _root.sector_size",
-			GoCode: "k.EntriesStart() * k.Root().SectorSize()",
+			GoCode: "k.EntriesStart() * k.RootBase().SectorSize()",
 			Type:   "int64",
 		},
 		Result{
 			Input:  "_root.block0.body.as<container_superblock>.block_size",
-			GoCode: "k.Root().Block0().Body().(ContainerSuperblock).BlockSize()",
+			GoCode: "k.RootBase().Block0().Body().(ContainerSuperblock).BlockSize()",
 			Type:   "runtime.KSYDecoder",
 		},
 		Result{
 			Input:  "(xp_desc_base + xp_desc_index) * _root.block_size",
-			GoCode: "(k.XpDescBase() + k.XpDescIndex()) * k.Root().BlockSize()",
+			GoCode: "(k.XpDescBase() + k.XpDescIndex()) * k.RootBase().BlockSize()",
 			Type:   "int64",
 		},
 		Result{
 			Input:  "(_parent.node_type & 4) == 0",
-			GoCode: "(k.Parent().NodeType() & 4) == 0",
+			GoCode: "(k.ParentBase().NodeType() & 4) == 0",
 			Type:   "bool",
 		},
 		Result{
 			Input:  "(_parent.level > 0) ? 256 : key_hdr.kind.to_i",
-			GoCode: "func()int64{if (k.Parent().Level() > 0){return 256}else{return int64(k.KeyHdr().Kind())}}()",
+			GoCode: "func()int64{if (k.ParentBase().Level() > 0){return 256}else{return int64(k.KeyHdr().Kind())}}()",
 			Type:   "int64",
 		},
 		Result{
 			Input:  "_root.block_size - data_offset - 40 * (_parent.node_type & 1)",
-			GoCode: "k.Root().BlockSize() - k.DataOffset() - 40*(k.Parent().NodeType()&1)",
+			GoCode: "k.RootBase().BlockSize() - k.DataOffset() - 40*(k.ParentBase().NodeType()&1)",
 			Type:   "int64",
 		},
 		Result{
