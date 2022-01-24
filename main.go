@@ -31,7 +31,7 @@ func YAMLUnmarshal(name string, source []byte, m interface{}, path string, debug
 	)
 }
 
-func createGofile(ksyPath, pkg string, debug bool) error {
+func createGoFile(ksyPath, pkg string, debug bool) error {
 	filename := path.Base(ksyPath)
 	dir := filepath.Dir(ksyPath)
 
@@ -93,19 +93,19 @@ func createGofile(ksyPath, pkg string, debug bool) error {
 	buffer.WriteLine(kaitai.String(baseStruct, baseStruct, baseStruct))
 
 	// format and add imports
-	formated, err := imports.Process("", []byte(buffer.String()), nil)
+	formatted, err := imports.Process("", []byte(buffer.String()), nil)
 	if err != nil {
 		log.Printf("Format error (%s): %s", ksyPath, err)
-		formated = []byte(buffer.String())
+		formatted = []byte(buffer.String())
 	}
-	err = ioutil.WriteFile(path.Join(dir, filename+".go"), formated, 0644)
+	err = ioutil.WriteFile(path.Join(dir, filename+".go"), formatted, 0644)
 
 	return errors.Wrap(err, "create go file")
 }
 
 func handleFile(filename, pkg string, debug bool) error {
 	if strings.HasSuffix(filename, ".ksy") {
-		return createGofile(filename, pkg, debug)
+		return createGoFile(filename, pkg, debug)
 	}
 	return nil
 }
@@ -118,16 +118,16 @@ func main() {
 		if strings.HasSuffix(filename, "/...") {
 			recPath := strings.Replace(filename, "/...", "", 1)
 			err = filepath.Walk(recPath, func(path string, f os.FileInfo, err error) error {
-				abspath, err := filepath.Abs(path)
+				absPath, err := filepath.Abs(path)
 				if err != nil {
 					return err
 				}
-				return handleFile(path, filepath.Base(filepath.Dir(abspath)), *debug)
+				return handleFile(path, filepath.Base(filepath.Dir(absPath)), *debug)
 			})
 		} else {
-			abspath, err := filepath.Abs(filename)
+			absPath, err := filepath.Abs(filename)
 			if err == nil {
-				err = handleFile(filename, filepath.Base(filepath.Dir(abspath)), *debug)
+				err = handleFile(filename, filepath.Base(filepath.Dir(absPath)), *debug)
 			}
 		}
 		if err != nil {

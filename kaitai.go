@@ -59,7 +59,7 @@ func (y *TypeKey) String() string {
 		}
 		return strcase.ToCamel(y.Type)
 	} else if y.TypeSwitch.SwitchOn != "" {
-		return "runtime.KSYDecoder"
+		return "runtime.Decoder"
 	}
 	return "[]byte"
 }
@@ -173,7 +173,7 @@ type Type struct {
 	Instances map[string]Attribute           `yaml:"instances,omitempty"`
 }
 
-func (k *Type) InitElem(attrHolder string, attr Attribute, dataType string, init bool) (goCode string) {
+func (k *Type) InitElem(attrHolder string, errHolder string, attr Attribute, dataType string, init bool) (goCode string) {
 	var buffer LineBuffer
 
 	// defer func() { buffer.WriteLine("k.Stream.SetErr(err)"); goCode = buffer.String() }()
@@ -205,28 +205,28 @@ func (k *Type) InitElem(attrHolder string, attr Attribute, dataType string, init
 			endian = "binary.BigEndian"
 		}
 		if attr.SizeEos != "" {
-			buffer.WriteLine(attrHolder + ", err = k.ReadBytesFull()")
+			buffer.WriteLine(attrHolder + ", " + errHolder + " = k.ReadBytesFull()")
 		} else if terminated {
 
 			if attr.Size == "" {
-				buffer.WriteLine("elem, err =k.ReadBytes(" + term + ")")
-				buffer.WriteLine("if err != nil && err == io.EOF { err = nil }")
+				buffer.WriteLine(attrHolder + ", " + errHolder + " =k.ReadBytes(" + term + ")")
+				buffer.WriteLine("if " + errHolder + " != nil && " + errHolder + " == io.EOF { " + errHolder + " = nil }")
 			} else {
 				// term & size
-				buffer.WriteLine("_, err = k.Stream.Read(" + attrHolder + ")")
+				buffer.WriteLine("_, " + errHolder + " = k.Stream.Read(" + attrHolder + ")")
 			}
 
 			// eos
 			if attr.EosError == "" {
 				attr.EosError = "true"
 			}
-			buffer.WriteLine("if err != nil && (err != io.EOF || " + goExpr(attr.EosError, "") + ") {")
+			buffer.WriteLine("if " + errHolder + " != nil && (" + errHolder + " != io.EOF || " + goExpr(attr.EosError, "") + ") {")
 			buffer.WriteLine("return")
 			buffer.WriteLine("}")
-			buffer.WriteLine("err = nil")
+			buffer.WriteLine(errHolder + " = nil")
 
 		} else {
-			buffer.WriteLine(fmt.Sprintf(attrHolder+", err = k.%v", toReadFunc(&attr, "le")))
+			buffer.WriteLine(fmt.Sprintf(attrHolder+", "+errHolder+" = k.%v", toReadFunc(&attr, "le")))
 		}
 	} else {
 		if resetPos {
@@ -234,9 +234,9 @@ func (k *Type) InitElem(attrHolder string, attr Attribute, dataType string, init
 			buffer.WriteLine("if reader, err = k.ReadBytesAsReader(k.Length()); err != nil {")
 			buffer.WriteLine("return")
 			buffer.WriteLine("}")
-			buffer.WriteLine("err = " + attrHolder + ".Decode(reader, k, k.Root())")
+			buffer.WriteLine(attrHolder + ".Read(reader, lazy, k, k.Root())")
 		} else {
-			buffer.WriteLine("err = " + attrHolder + ".Decode(k.Stream, k, k.Root())")
+			buffer.WriteLine(attrHolder + ".Read(k.Stream, lazy, k, k.Root())")
 		}
 	}
 
@@ -283,14 +283,30 @@ func (k *Type) InitElem(attrHolder string, attr Attribute, dataType string, init
 	return
 }
 
-func (k *Type) InitAttr(attr Attribute) (goCode string) {
+func (k *Type) CallAttr(attr Attribute) (ret string) {
+	if isNative(attr.DataType()) {
+		ret = "k.read" + strings.Title(attr.Name()) + "()"
+	} else {
+		ret = "k.read" + strings.Title(attr.Name()) + "(lazy)"
+	}
+	return
+}
+
+func (k *Type) InitAttr(attr Attribute, typeName string) (goCode string) {
 	var buffer LineBuffer
 
 	defer func() { goCode = buffer.String() }()
 
-	var attrHolder string
+	if isNative(attr.DataType()) {
+		buffer.WriteLine("func (k *" + typeName + ") read" + strings.Title(attr.Name()) + "() (ret " + attr.DataType() + ", err error){")
+	} else {
+		buffer.WriteLine("func (k *" + typeName + ") read" + strings.Title(attr.Name()) + "(lazy bool) (ret " + attr.DataType() + ", err error){")
+	}
+
+	var attrHolder, errHolder string
 	if attr.Value == "" {
-		attrHolder = "k." + attr.Name()
+		attrHolder = "ret"
+		errHolder = "err"
 		//buffer.WriteLine("var elem " + attr.ChildType())
 	}
 	// buffer.WriteLine("elem = &" + attr.ChildType() + "{}")
@@ -307,6 +323,8 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 		} else {
 			buffer.WriteLine(attrHolder + " = " + attr.DataType() + "(" + goExpr(attr.Value, "") + ")")
 		}
+		buffer.WriteLine("return")
+		buffer.WriteLine("}")
 		return
 	}
 
@@ -326,7 +344,7 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 			//buffer.WriteLine("k.Seek(0, io.SeekStart)")
 		}
 		//buffer.WriteLine("_, err = k.Seek(" + goExpr(attr.Pos, "int64") + ", " + whence + ")")
-		buffer.WriteLine("if err != nil { return }")
+		buffer.WriteLine("if " + errHolder + " != nil { return }")
 		// restore position
 		//defer buffer.WriteLine("k.Seek(pos" + attr.Name() + ", io.SeekStart)")
 	}
@@ -365,11 +383,11 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 
 			buffer.WriteLine("for index := 0; " + before + "; index++ {")
 
-			buffer.WriteString(k.InitElem(attrHolder, attr, attr.ChildType(), true))
+			buffer.WriteString(k.InitElem(attrHolder, errHolder, attr, attr.ChildType(), true))
 
 			// break on error
-			buffer.WriteLine("if err != nil {")
-			buffer.WriteLine("if err == io.EOF { err = nil }")
+			buffer.WriteLine("if " + errHolder + " != nil {")
+			buffer.WriteLine("if " + errHolder + " == io.EOF { " + errHolder + " = nil }")
 			buffer.WriteLine("break")
 			buffer.WriteLine("}")
 
@@ -385,6 +403,8 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 				buffer.WriteLine("if " + until + "{break}")
 			}
 
+			buffer.WriteLine("}")
+			buffer.WriteLine("return")
 			buffer.WriteLine("}")
 			return
 		}
@@ -412,7 +432,7 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 	if attr.Type.CustomType && attr.Value == "" {
 		buffer.WriteLine(attrHolder + " = &" + attr.ChildType() + "{}")
 	}
-	buffer.WriteString(k.InitElem(attrHolder, attr, attr.DataType(), false))
+	buffer.WriteString(k.InitElem(attrHolder, errHolder, attr, attr.DataType(), false))
 
 	if attr.Process != "" {
 		process := attr.Process
@@ -453,6 +473,8 @@ func (k *Type) InitAttr(attr Attribute) (goCode string) {
 	} else {
 		//buffer.WriteLine("k." + attr.Name() + " = elem")
 	}
+	buffer.WriteLine("return")
+	buffer.WriteLine("}")
 
 	return
 }
@@ -500,18 +522,22 @@ func (k *Type) String(typeName string, parent string, root string) string {
 	buffer.WriteLine("}")
 
 	// decode function
-	buffer.WriteLine("func (k *" + typeName + ") Decode(reader io.ReadSeeker, ancestors ...interface{}) (err error) {")
-	buffer.WriteLine("if k.TypeIO, err = runtime.NewTypeIO(reader, k, ancestors...); err != nil {")
+	buffer.WriteLine("func (k *" + typeName + ") Read(reader io.ReadSeeker, lazy bool, ancestors ...interface{}) {")
+	buffer.WriteLine("if k.TypeIO = runtime.NewTypeIO(reader, k, ancestors...); k.TypeIO.DecodeErr != nil {")
 	buffer.WriteLine("return")
 	buffer.WriteLine("}")
 
 	for _, attr := range k.Seq {
-		buffer.WriteLine("if err == nil {")
-		buffer.WriteString(k.InitAttr(attr))
+		buffer.WriteLine("if k." + attr.Name() + ", k.DecodeErr = " + k.CallAttr(attr) + "; k.DecodeErr != nil {")
+		buffer.WriteLine("return")
 		buffer.WriteLine("}")
 	}
 	buffer.WriteLine("return")
 	buffer.WriteLine("}")
+
+	for _, attr := range k.Seq {
+		buffer.WriteLine(k.InitAttr(attr, typeName))
+	}
 
 	// create getter
 	for _, attr := range k.Seq {
@@ -525,7 +551,7 @@ func (k *Type) String(typeName string, parent string, root string) string {
 		inst.ID = name
 		buffer.WriteLine("func (k *" + typeName + ") " + strcase.ToCamel(inst.Name()) + "() (value " + inst.DataType() + ") {")
 		buffer.WriteLine("if !k." + inst.Name() + "Set {")
-		init := k.InitAttr(inst)
+		init := k.InitAttr(inst, typeName)
 		if strings.Contains(init, "err") {
 			buffer.WriteLine("var err error")
 		}

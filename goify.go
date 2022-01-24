@@ -176,7 +176,7 @@ func isIdentifierPart(tok rune, casting bool) bool {
 	return tok == scanner.Ident || tok == '.' || tok == '"' || tok == '_' || tok == '[' || tok == ']' || tok == '\''
 }
 
-func goExprIdent(expr, casttype, current_attr string) string {
+func goExprIdent(expr, castType, currentAttr string) string {
 	ret := "k."
 	var s scanner.Scanner
 	s.Init(strings.NewReader(expr))
@@ -195,7 +195,7 @@ func goExprIdent(expr, casttype, current_attr string) string {
 		case "true", "false":
 			ret = s.TokenText()
 		case "_":
-			ret = ret[:len(ret)-1] + "." + current_attr
+			ret = ret[:len(ret)-1] + "." + currentAttr
 		case "\"":
 			ret += "\""
 		case ".":
@@ -274,18 +274,18 @@ func goExprIdent(expr, casttype, current_attr string) string {
 		start = false
 	}
 
-	if casttype != "" {
-		return casttype + "(" + ret + ")"
+	if castType != "" {
+		return castType + "(" + ret + ")"
 	}
 	return ret
 
 }
 
-func goExpr(expr, casttype string) string {
-	return goExprAttr(expr, casttype, "")
+func goExpr(expr, castType string) string {
+	return goExprAttr(expr, castType, "")
 }
 
-func goExprAttr(expr, casttype, current_attr string) string {
+func goExprAttr(expr, castType, currentAttr string) string {
 	// replace binary values
 	re := regexp.MustCompile("0[bB][0-9]+")
 	expr = re.ReplaceAllStringFunc(expr, bitString)
@@ -305,7 +305,7 @@ func goExprAttr(expr, casttype, current_attr string) string {
 
 		// handle identifier chain
 		if !isIdentifierPart(tok, casting) && identifier != "" {
-			ret += " " + goExprIdent(identifier, casttype, current_attr)
+			ret += " " + goExprIdent(identifier, castType, currentAttr)
 			identifier = ""
 		}
 
@@ -338,15 +338,15 @@ func goExprAttr(expr, casttype, current_attr string) string {
 
 	// handle identifier chain
 	if identifier != "" {
-		ret += " " + goExprIdent(identifier, casttype, current_attr)
+		ret += " " + goExprIdent(identifier, castType, currentAttr)
 	}
 
 	// remove whitespace and format code
 	ret = strings.TrimSpace(ret)
-	formated, err := format.Source([]byte(ret))
+	formatted, err := format.Source([]byte(ret))
 	if err != nil {
 		log.Println(ret, err)
 		return ret
 	}
-	return string(formated)
+	return string(formatted)
 }
