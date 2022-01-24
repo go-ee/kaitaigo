@@ -238,6 +238,16 @@ func (k *Type) InitElem(attrHolder string, errHolder string, attr Attribute, dat
 		} else {
 			buffer.WriteLine(attrHolder + ".Read(k.Stream, lazy, k, k.Root())")
 		}
+
+		if attrHolder != "ret" {
+			buffer.WriteLine("if " + attrHolder + ".DecodeErr != nil {")
+			buffer.WriteLine(errHolder + " = " + attrHolder + ".DecodeErr")
+			buffer.WriteLine("}")
+		} else {
+			buffer.WriteLine("if k.DecodeErr != nil {")
+			buffer.WriteLine(errHolder + " = k.DecodeErr")
+			buffer.WriteLine("}")
+		}
 	}
 
 	// pad
