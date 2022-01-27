@@ -350,7 +350,6 @@ func (k *Stream) ReadBitsIntBe(n uint8) (res uint64, err error) {
 	k.bitsLeft -= n
 	mask = (1 << k.bitsLeft) - 1
 	k.bits &= mask
-
 	return res, err
 }
 
@@ -458,7 +457,6 @@ func (k *Stream) ReadBitsIntLe(n uint8) (res uint64, err error) {
 	// remove bottom bits that we've just read by shifting
 	k.bits >>= n
 	k.bitsLeft = uint8(bitsLeft) - n
-
 	return res, err
 }
 

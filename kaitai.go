@@ -388,7 +388,7 @@ func (k *Type) InitAttr(attr Attribute, typeName string) (goCode string) {
 
 			// slice
 			if strings.HasPrefix(attr.DataType(), "[]") {
-				buffer.WriteLine("k." + attr.Name() + " = " + attr.DataType() + "{}")
+				//buffer.WriteLine(" ret = " + attr.DataType() + "{}")
 			}
 
 			buffer.WriteLine("for index := 0; " + before + "; index++ {")
@@ -403,7 +403,7 @@ func (k *Type) InitAttr(attr Attribute, typeName string) (goCode string) {
 
 			// add element
 			if strings.HasPrefix(attr.DataType(), "[]") {
-				buffer.WriteLine("k." + attr.Name() + " = append(k." + attr.Name() + ", " + attrHolder + ")")
+				buffer.WriteLine("ret = append(ret, " + attrHolder + ")")
 			} else {
 				buffer.WriteLine("k." + attr.Name() + "[index] = " + attrHolder)
 			}
